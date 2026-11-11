@@ -1,106 +1,179 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 
 public class Player : MonoBehaviour
 {
-
     public float speed;
     public float jumpForce;
     public int health = 100;
+
     private Rigidbody2D rb2D;
-
     private SpriteRenderer spriteRenderer;
-
     private Vector2 moveDirection;
+
+    private bool isDead = false;
+
     public InputActionReference move;
     public InputActionReference attack;
     public InputActionReference jump;
 
-    private bool isGrounded;
     [SerializeField] private Transform groundCheck;
     [SerializeField] private float checkRadius = 0.2f;
     [SerializeField] private LayerMask groundLayer;
-    
+
+    private bool isGrounded;
+
+    [SerializeField] private Transform attackPoint;
+    [SerializeField] private float attackRange = 0.4f;
+    [SerializeField] private LayerMask enemyLayer;
+    [SerializeField] private int attackDamage = 1;
+
+    private Vector3 attackPointStartPos;
 
     public Animator animator;
+
     void Start()
     {
         rb2D = GetComponent<Rigidbody2D>();
         spriteRenderer = GetComponent<SpriteRenderer>();
         animator = GetComponent<Animator>();
-    }
 
+        attackPointStartPos = attackPoint.localPosition;
+    }
 
     void Update()
     {
+        if (isDead) return;
+
         moveDirection = move.action.ReadValue<Vector2>();
-        
+
         isGrounded = Physics2D.OverlapCircle(
-        groundCheck.position,
-        checkRadius,
-        groundLayer
-    );
+            groundCheck.position,
+            checkRadius,
+            groundLayer
+        );
 
-    if (moveDirection.x > 0)
-    {
-        spriteRenderer.flipX = false;
+        if (moveDirection.x > 0)
+        {
+            spriteRenderer.flipX = false;
+
+            attackPoint.localPosition = new Vector3(
+                Mathf.Abs(attackPointStartPos.x),
+                attackPointStartPos.y,
+                attackPointStartPos.z
+            );
+        }
+        else if (moveDirection.x < 0)
+        {
+            spriteRenderer.flipX = true;
+
+            attackPoint.localPosition = new Vector3(
+                -Mathf.Abs(attackPointStartPos.x),
+                attackPointStartPos.y,
+                attackPointStartPos.z
+            );
+        }
+
+        animator.SetFloat("Speed", Mathf.Abs(moveDirection.x));
+        animator.SetBool("IsGrounded", isGrounded);
+        animator.SetFloat("VerticalVelocity", rb2D.linearVelocity.y);
     }
-    else if (moveDirection.x < 0)
-    {
-        spriteRenderer.flipX = true;
-    }
-    animator.SetFloat("Speed", Mathf.Abs(moveDirection.x)); 
-    animator.SetBool("IsGrounded", isGrounded);
-    animator.SetFloat("VerticalVelocity", rb2D.linearVelocity.y);
-
-    }
-
-
 
     private void FixedUpdate()
     {
-        rb2D.linearVelocity = new Vector2(moveDirection.x * speed, rb2D.linearVelocity.y );
-    }
+        if (isDead) return;
 
+        rb2D.linearVelocity = new Vector2(
+            moveDirection.x * speed,
+            rb2D.linearVelocity.y
+        );
+    }
 
     public void TakeDamage(int damage)
     {
+        if (isDead) return;
+
         health -= damage;
-        Debug.Log("Jugador ha recibido daño. Salud actual: " + health);
+
+        Debug.Log("Vida actual: " + health);
+
         if (health <= 0)
         {
-            Debug.Log("Jugador ha muerto");
-
+            StartCoroutine(Die());
         }
+    }
+
+    private IEnumerator Die()
+    {
+        isDead = true;
+
+        rb2D.linearVelocity = Vector2.zero;
+
+        animator.SetTrigger("Death");
+
+        yield return new WaitForSeconds(1f);
+
+        SceneManager.LoadScene("Level1");
     }
 
     void OnEnable()
     {
-        attack.action.started+= Attack;
+        attack.action.started += Attack;
         jump.action.started += Jump;
     }
 
     void OnDisable()
     {
-        attack.action.started-= Attack;
+        attack.action.started -= Attack;
         jump.action.started -= Jump;
     }
 
     private void Attack(InputAction.CallbackContext obj)
     {
-        Debug.Log("Attack");
+        if (isDead) return;
+
+        animator.SetTrigger("Attack");
+
+        Collider2D[] hitEnemies = Physics2D.OverlapCircleAll(
+            attackPoint.position,
+            attackRange,
+            enemyLayer
+        );
+
+        foreach (Collider2D enemy in hitEnemies)
+        {
+            Vector2 hitDirection =
+                (enemy.transform.position - transform.position).normalized;
+
+            enemy.GetComponent<Enemy>()?.TakeDamage(
+                attackDamage,
+                hitDirection
+            );
+        }
     }
 
-private void Jump(InputAction.CallbackContext obj)
-{
-    if (isGrounded)
+    private void Jump(InputAction.CallbackContext obj)
     {
-        rb2D.linearVelocity = new Vector2(
-            rb2D.linearVelocity.x,
-            jumpForce
+        if (isGrounded)
+        {
+            rb2D.linearVelocity = new Vector2(
+                rb2D.linearVelocity.x,
+                jumpForce
+            );
+        }
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        if (attackPoint == null) return;
+
+        Gizmos.color = Color.red;
+
+        Gizmos.DrawWireSphere(
+            attackPoint.position,
+            attackRange
         );
     }
-}
-
-
 }
