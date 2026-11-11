@@ -6,7 +6,7 @@ public class Player : MonoBehaviour
 
     public float speed;
     public float jumpForce;
-    public float health = 100f;
+    public int health = 100;
     private Rigidbody2D rb2D;
 
     private SpriteRenderer spriteRenderer;
@@ -62,6 +62,17 @@ public class Player : MonoBehaviour
         rb2D.linearVelocity = new Vector2(moveDirection.x * speed, rb2D.linearVelocity.y );
     }
 
+
+    public void TakeDamage(int damage)
+    {
+        health -= damage;
+        Debug.Log("Jugador ha recibido daño. Salud actual: " + health);
+        if (health <= 0)
+        {
+            Debug.Log("Jugador ha muerto");
+
+        }
+    }
 
     void OnEnable()
     {
