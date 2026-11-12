@@ -14,6 +14,7 @@ public class Player : MonoBehaviour
     private Vector2 moveDirection;
 
     private bool isDead = false;
+    private bool isKnockedBack = false;
 
     public InputActionReference move;
     public InputActionReference attack;
@@ -85,6 +86,8 @@ public class Player : MonoBehaviour
     {
         if (isDead) return;
 
+        if (isKnockedBack) return;
+
         rb2D.linearVelocity = new Vector2(
             moveDirection.x * speed,
             rb2D.linearVelocity.y
@@ -96,6 +99,10 @@ public class Player : MonoBehaviour
         if (isDead) return;
 
         health -= damage;
+        AudioManager.Instance.PlaySound(
+    AudioManager.Instance.hurtClip
+);
+        StartCoroutine(DamageFlash());
 
         Debug.Log("Vida actual: " + health);
 
@@ -105,12 +112,48 @@ public class Player : MonoBehaviour
         }
     }
 
+    public void ApplyKnockback(float direction)
+    {
+        if (isDead) return;
+
+        StartCoroutine(KnockbackRoutine());
+
+        rb2D.linearVelocity = Vector2.zero;
+
+        rb2D.AddForce(
+            new Vector2(direction * 1.2f, 1f),
+            ForceMode2D.Impulse
+        );
+    }
+
+    private IEnumerator KnockbackRoutine()
+    {
+        isKnockedBack = true;
+
+        yield return new WaitForSeconds(0.25f);
+
+        isKnockedBack = false;
+    }
+
+    private IEnumerator DamageFlash()
+    {
+        Color originalColor = spriteRenderer.color;
+
+        spriteRenderer.color = Color.red;
+
+        yield return new WaitForSeconds(0.15f);
+
+        spriteRenderer.color = originalColor;
+    }
+
     private IEnumerator Die()
     {
         isDead = true;
 
         rb2D.linearVelocity = Vector2.zero;
-
+        AudioManager.Instance.PlaySound(
+    AudioManager.Instance.deathClip
+);
         animator.SetTrigger("Death");
 
         yield return new WaitForSeconds(1f);
@@ -133,7 +176,9 @@ public class Player : MonoBehaviour
     private void Attack(InputAction.CallbackContext obj)
     {
         if (isDead) return;
-
+        AudioManager.Instance.PlaySound(
+    AudioManager.Instance.attackClip
+);
         animator.SetTrigger("Attack");
 
         Collider2D[] hitEnemies = Physics2D.OverlapCircleAll(
@@ -156,13 +201,20 @@ public class Player : MonoBehaviour
 
     private void Jump(InputAction.CallbackContext obj)
     {
+        if (isDead) return;
         if (isGrounded)
         {
+                        AudioManager.Instance.PlaySound(
+    AudioManager.Instance.jumpClip
+);
             rb2D.linearVelocity = new Vector2(
                 rb2D.linearVelocity.x,
                 jumpForce
             );
+
+
         }
+
     }
 
     private void OnDrawGizmosSelected()

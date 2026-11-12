@@ -19,35 +19,17 @@ public class Enemy : MonoBehaviour
     private void Start()
     {
         rb = GetComponent<Rigidbody2D>();
-
-        // Busca el sprite aunque esté en un hijo
         spriteRenderer = GetComponentInChildren<SpriteRenderer>();
-
-        if (spriteRenderer == null)
-        {
-            Debug.LogError("No se encontró SpriteRenderer en el enemigo");
-        }
     }
 
     private void FixedUpdate()
     {
-        if (isKnockedBack)
-            return;
+        if (isKnockedBack) return;
 
-        if (movingRight)
-        {
-            rb.linearVelocity = new Vector2(
-                speed,
-                rb.linearVelocity.y
-            );
-        }
-        else
-        {
-            rb.linearVelocity = new Vector2(
-                -speed,
-                rb.linearVelocity.y
-            );
-        }
+        rb.linearVelocity = new Vector2(
+            movingRight ? speed : -speed,
+            rb.linearVelocity.y
+        );
     }
 
     private void Flip()
@@ -72,9 +54,6 @@ public class Enemy : MonoBehaviour
 
     private IEnumerator DamageFlash()
     {
-        if (spriteRenderer == null)
-            yield break;
-
         Color originalColor = spriteRenderer.color;
 
         spriteRenderer.color = Color.red;
@@ -121,22 +100,16 @@ public class Enemy : MonoBehaviour
                 .GetComponent<Player>()
                 .TakeDamage(damage);
 
-            Rigidbody2D playerRb =
-                collision.gameObject.GetComponent<Rigidbody2D>();
-
             float dir = Mathf.Sign(
                 collision.transform.position.x -
                 transform.position.x
             );
 
-            playerRb.linearVelocity = Vector2.zero;
-
-            playerRb.AddForce(
-                new Vector2(dir * 5f, 2f),
-                ForceMode2D.Impulse
-            );
+            collision.gameObject
+                .GetComponent<Player>()
+                .ApplyKnockback(dir);
 
             Flip();
         }
     }
-}
+}   
