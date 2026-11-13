@@ -2300,6 +2300,8 @@ MonoBehaviour:
   speed: 2
   jumpForce: 4
   health: 100
+  invulnerabilityTime: 1
+  blinkInterval: 0.1
   move: {fileID: -423622973811913320, guid: 239735bcf4b7abd42974a61f6d1b473d, type: 3}
   attack: {fileID: 365922838444369400, guid: 239735bcf4b7abd42974a61f6d1b473d, type: 3}
   jump: {fileID: 237818843082366425, guid: 239735bcf4b7abd42974a61f6d1b473d, type: 3}
@@ -3919,7 +3921,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TimerManager
   timerText: {fileID: 259937750}
-  startTime: 180
+  startTime: 120
 --- !u!1001 &975701579
 PrefabInstance:
   m_ObjectHideFlags: 0

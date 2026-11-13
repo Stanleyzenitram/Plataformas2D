@@ -16,6 +16,13 @@ public class Player : MonoBehaviour
     private bool isDead = false;
     private bool isKnockedBack = false;
 
+    // --- Invulnerabilidad ---
+    private bool isInvulnerable = false;
+    [SerializeField] private float invulnerabilityTime = 1f;
+    [SerializeField] private float blinkInterval = 0.1f;
+
+    public bool IsInvulnerable => isInvulnerable;
+
     public InputActionReference move;
     public InputActionReference attack;
     public InputActionReference jump;
@@ -96,7 +103,7 @@ public class Player : MonoBehaviour
 
     public void TakeDamage(int damage)
     {
-        if (isDead) return;
+        if (isDead || isInvulnerable) return;
 
         health -= damage;
         AudioManager.Instance.PlaySound(AudioManager.Instance.hurtClip);
@@ -111,12 +118,13 @@ public class Player : MonoBehaviour
         {
             animator.SetTrigger("Hurt");
             StartCoroutine(DamageFlash());
+            StartCoroutine(InvulnerabilityRoutine());
         }
     }
 
     public void ApplyKnockback(float direction)
     {
-        if (isDead) return;
+        if (isDead || isInvulnerable) return;
 
         StartCoroutine(KnockbackRoutine());
 
@@ -146,6 +154,22 @@ public class Player : MonoBehaviour
         yield return new WaitForSeconds(0.15f);
 
         spriteRenderer.color = originalColor;
+    }
+
+    private IEnumerator InvulnerabilityRoutine()
+    {
+        isInvulnerable = true;
+
+        float elapsed = 0f;
+        while (elapsed < invulnerabilityTime)
+        {
+            spriteRenderer.enabled = !spriteRenderer.enabled;
+            yield return new WaitForSeconds(blinkInterval);
+            elapsed += blinkInterval;
+        }
+
+        spriteRenderer.enabled = true;
+        isInvulnerable = false;
     }
 
     private IEnumerator Die()
@@ -193,6 +217,8 @@ public class Player : MonoBehaviour
 
             enemy.GetComponentInParent<Enemy>()?.TakeDamage(attackDamage, hitDirection);
             enemy.GetComponentInParent<HellCat>()?.TakeDamage(attackDamage, hitDirection);
+            enemy.GetComponentInParent<Skeleton>()?.TakeDamage(attackDamage, hitDirection);
+            enemy.GetComponentInParent<Boss>()?.TakeDamage(attackDamage, hitDirection);
         }
     }
 

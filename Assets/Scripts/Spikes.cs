@@ -28,5 +28,11 @@ public class Spikes : MonoBehaviour
         {
             cat.Kill();
         }
+
+        Skeleton skeleton = collision.GetComponentInParent<Skeleton>();
+        if (skeleton != null)
+        {
+            skeleton.Kill();
+        }
     }
 }

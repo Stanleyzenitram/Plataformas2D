@@ -32,7 +32,7 @@ public class WinZone : MonoBehaviour
             playerScript.enabled = false;
         }
 
-        messageText.text = "NIVEL 1 COMPLETADO";
+        messageText.text = "NIVEL COMPLETADO";
 
         yield return new WaitForSeconds(2f);
 
