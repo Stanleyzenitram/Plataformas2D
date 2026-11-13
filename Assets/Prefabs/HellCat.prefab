@@ -237,7 +237,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HellCat
   speed: 3
-  damage: 10
+  damage: 30
   health: 5
   knockbackForce: 6
   knockbackDuration: 0.2
