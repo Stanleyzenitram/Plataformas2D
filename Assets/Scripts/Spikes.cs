@@ -2,18 +2,31 @@ using UnityEngine;
 
 public class Spikes : MonoBehaviour
 {
-
     public int damage = 10; // Cantidad de daño que los pinchos infligen al jugador
-    
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
+
     void OnTriggerEnter2D(Collider2D collision)
     {
+        // Jugador
         if (collision.gameObject.CompareTag("Player"))
         {
-            // Aquí puedes agregar la lógica para reiniciar el nivel o restar vidas al jugador
             Debug.Log("Jugador ha entrado en las pinchos");
-            collision.GetComponent<Player>()
-                 .TakeDamage(damage);
+            collision.GetComponent<Player>().TakeDamage(damage);
+            return;
+        }
+
+        // Enemigos (fantasma)
+        Enemy enemy = collision.GetComponentInParent<Enemy>();
+        if (enemy != null)
+        {
+            enemy.Kill();
+            return;
+        }
+
+        // Enemigos (gato)
+        HellCat cat = collision.GetComponentInParent<HellCat>();
+        if (cat != null)
+        {
+            cat.Kill();
         }
     }
 }

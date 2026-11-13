@@ -99,16 +99,18 @@ public class Player : MonoBehaviour
         if (isDead) return;
 
         health -= damage;
-        AudioManager.Instance.PlaySound(
-    AudioManager.Instance.hurtClip
-);
-        StartCoroutine(DamageFlash());
+        AudioManager.Instance.PlaySound(AudioManager.Instance.hurtClip);
 
         Debug.Log("Vida actual: " + health);
 
         if (health <= 0)
         {
             StartCoroutine(Die());
+        }
+        else
+        {
+            animator.SetTrigger("Hurt");
+            StartCoroutine(DamageFlash());
         }
     }
 
@@ -151,14 +153,12 @@ public class Player : MonoBehaviour
         isDead = true;
 
         rb2D.linearVelocity = Vector2.zero;
-        AudioManager.Instance.PlaySound(
-    AudioManager.Instance.deathClip
-);
+        AudioManager.Instance.PlaySound(AudioManager.Instance.deathClip);
         animator.SetTrigger("Death");
 
         yield return new WaitForSeconds(1f);
 
-        SceneManager.LoadScene("Level1");
+        GameUIManager.Instance.ShowGameOver();
     }
 
     void OnEnable()
@@ -175,10 +175,9 @@ public class Player : MonoBehaviour
 
     private void Attack(InputAction.CallbackContext obj)
     {
-        if (isDead) return;
-        AudioManager.Instance.PlaySound(
-    AudioManager.Instance.attackClip
-);
+        if (isDead || Time.timeScale == 0f) return;
+
+        AudioManager.Instance.PlaySound(AudioManager.Instance.attackClip);
         animator.SetTrigger("Attack");
 
         Collider2D[] hitEnemies = Physics2D.OverlapCircleAll(
@@ -192,29 +191,24 @@ public class Player : MonoBehaviour
             Vector2 hitDirection =
                 (enemy.transform.position - transform.position).normalized;
 
-            enemy.GetComponent<Enemy>()?.TakeDamage(
-                attackDamage,
-                hitDirection
-            );
+            enemy.GetComponentInParent<Enemy>()?.TakeDamage(attackDamage, hitDirection);
+            enemy.GetComponentInParent<HellCat>()?.TakeDamage(attackDamage, hitDirection);
         }
     }
 
     private void Jump(InputAction.CallbackContext obj)
     {
-        if (isDead) return;
+        if (isDead || Time.timeScale == 0f) return;
+
         if (isGrounded)
         {
-                        AudioManager.Instance.PlaySound(
-    AudioManager.Instance.jumpClip
-);
+            AudioManager.Instance.PlaySound(AudioManager.Instance.jumpClip);
+
             rb2D.linearVelocity = new Vector2(
                 rb2D.linearVelocity.x,
                 jumpForce
             );
-
-
         }
-
     }
 
     private void OnDrawGizmosSelected()
